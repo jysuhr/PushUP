@@ -12,7 +12,7 @@ struct PresetView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            Text("목표를 선택하세요")
+            Text("세션 목표를 선택하세요")
                 .font(.title2)
                 .fontWeight(.bold)
                 .padding(50)
@@ -30,11 +30,12 @@ private struct PresetButton: View {
     let set3: Int
     let set4: Int
     let set5: Int
+    var session: [Int] {
+        [set1, set2, set3, set4, set5]
+    }
     
     var body: some View {
-        Button(action: {
-            print("버튼 눌림")
-        }) {
+        NavigationLink(destination: ExerciseView(targetCount: session)) {
             HStack(spacing: 0) {
                 PresetCircle(num: set1)
                 PresetDivider()
@@ -62,7 +63,7 @@ private struct PresetCircle: View {
                 .frame(width: height, height: height)
             Text("\(num)")
                 .font(.system(size: 30, weight: .light))
-                .foregroundStyle(.primary)
+                .foregroundStyle(.white)
         }
     }
 }
@@ -71,6 +72,7 @@ private struct PresetDivider: View {
     var body: some View {
         Rectangle()
             .frame(width: 18, height: 2)
+            .foregroundStyle(.white.opacity(0.6))
     }
 }
 

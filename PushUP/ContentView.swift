@@ -32,16 +32,15 @@ struct ContentView: View {
                         CountView(count: $count,
                                   isMuted: $isMuted,
                                   speechSynthesizer: speechSynthesizer)
-                        //                        .background(.green)
                         
-                        ButtonView(count: $count, isMuted: $isMuted, speechSynthesizer: speechSynthesizer)
+                        ButtonView(count: $count,
+                                   isMuted: $isMuted,
+                                   speechSynthesizer: speechSynthesizer)
                         
                         Spacer()
                     }
                     
                     PresetView()
-//                            .padding(.top, 100)
-//                            .background(.red)
                 }
                 .tabViewStyle(PageTabViewStyle())
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
@@ -146,7 +145,7 @@ private struct ButtonView: View {
     let speechSynthesizer: AVSpeechSynthesizer
     
     var body: some View {
-        NavigationLink(destination: ExerciseView(targetCount: count)) {
+        NavigationLink(destination: ExerciseView(targetCount: [count])) {
             Text("운동 시작!")
                 .foregroundColor(.white)
                 .font(.system(size: 18, weight: .bold))
