@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var speechSynthesizer = AVSpeechSynthesizer()
     @State private var isMuted: Bool = false
     @State private var borderProgress: CGFloat = 0.0
+    @State private var restTime: Int = 30
     
     var body: some View {
         NavigationStack {
@@ -35,12 +36,15 @@ struct ContentView: View {
                         
                         ButtonView(count: $count,
                                    isMuted: $isMuted,
+                                   restTime: $restTime,
                                    speechSynthesizer: speechSynthesizer)
                         
                         Spacer()
                     }
                     
-                    PresetView()
+                    PresetView(restTime: $restTime)
+                    
+                    SettingView(restTime: $restTime)
                 }
                 .tabViewStyle(PageTabViewStyle())
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
@@ -72,7 +76,6 @@ private struct CountView: View {
     
     var body: some View {
         VStack {
-//            Spacer()
             Text("이번 푸시업 목표는?")
                 .font(.title2)
                 .fontWeight(.bold)
@@ -142,10 +145,11 @@ private struct CountView: View {
 private struct ButtonView: View {
     @Binding var count: Int
     @Binding var isMuted: Bool
+    @Binding var restTime: Int
     let speechSynthesizer: AVSpeechSynthesizer
     
     var body: some View {
-        NavigationLink(destination: ExerciseView(targetCount: [count])) {
+        NavigationLink(destination: ExerciseView(restTime: restTime, targetCount: [count])) {
             Text("운동 시작!")
                 .foregroundColor(.white)
                 .font(.system(size: 18, weight: .bold))

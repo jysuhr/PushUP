@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PresetView: View {
+    @Binding var restTime: Int
     var count: Int = 0
     
     var body: some View {
@@ -16,15 +17,16 @@ struct PresetView: View {
                 .font(.title2)
                 .fontWeight(.bold)
                 .padding(50)
-            PresetButton(set1: 2, set2: 2, set3: 3, set4: 2, set5: 2)
-            PresetButton(set1: 2, set2: 2, set3: 3, set4: 3, set5: 2)
-            PresetButton(set1: 2, set2: 3, set3: 4, set4: 3, set5: 2)
-            PresetButton(set1: 2, set2: 3, set3: 4, set4: 4, set5: 2)
+            PresetButton(restTime: $restTime, set1: 2, set2: 2, set3: 3, set4: 2, set5: 2)
+            PresetButton(restTime: $restTime, set1: 2, set2: 2, set3: 3, set4: 3, set5: 2)
+            PresetButton(restTime: $restTime, set1: 2, set2: 3, set3: 4, set4: 3, set5: 2)
+            PresetButton(restTime: $restTime, set1: 2, set2: 3, set3: 4, set4: 4, set5: 2)
         }
     }
 }
 
 private struct PresetButton: View {
+    @Binding var restTime: Int
     let set1: Int
     let set2: Int
     let set3: Int
@@ -35,7 +37,7 @@ private struct PresetButton: View {
     }
     
     var body: some View {
-        NavigationLink(destination: ExerciseView(targetCount: session)) {
+        NavigationLink(destination: ExerciseView(restTime: restTime, targetCount: session)) {
             HStack(spacing: 0) {
                 PresetCircle(num: set1)
                 PresetDivider()
@@ -87,6 +89,6 @@ private struct PresetDivider: View {
         )
         .ignoresSafeArea(.all)
         
-        PresetView()
+//        PresetView()
     }
 }

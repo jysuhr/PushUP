@@ -15,13 +15,20 @@ private func checkARSupport() -> Bool {
 }
 
 struct ExerciseView: View {
+    var restTime: Int
     let targetCount: [Int]
+    
     var totalSetNum: Int { targetCount.count }
+    @State private var restTimeRemaining: Int = 30
     @State private var currentSetIndex: Int = 0
     @State private var isResting: Bool = false
-    @State private var restTimeRemaining: Int = 30
-//    @State private var restTimeRemaining: Int = 2
     @State private var isFinished: Bool = false
+    
+    init(restTime: Int, targetCount: [Int]) {
+        self.restTime = restTime
+        self.targetCount = targetCount
+        self._restTimeRemaining = State(initialValue: restTime)
+    }
     
     var body: some View {
         ZStack {
@@ -60,8 +67,7 @@ struct ExerciseView: View {
     private func startRest() {
         if currentSetIndex < totalSetNum - 1 {
             isResting = true
-            restTimeRemaining = 30
-//            restTimeRemaining = 2
+            restTimeRemaining = restTime
         } else {
             print("모든 세트 완료")
             isFinished = true
@@ -212,5 +218,5 @@ private struct CountView: View {
 }
 
 #Preview {
-    ExerciseView(targetCount: [10])
+//    ExerciseView(targetCount: [10])
 }
