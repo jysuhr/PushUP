@@ -168,7 +168,7 @@ struct ARFaceTrackingView: UIViewRepresentable {
             let currentDistance = sqrt(position.x * position.x +
                                      position.y * position.y +
                                      position.z * position.z)
-            print("Face Distance: \(String(format: "%.4f", currentDistance))m")
+//            print("Face Distance: \(String(format: "%.4f", currentDistance))m")
             
             DispatchQueue.main.async {
                 self.checkPushUpCount(distance: currentDistance)
