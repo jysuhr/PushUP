@@ -8,7 +8,7 @@
 import SwiftUI
 import ARKit
 import SceneKit
-import AVFoundation
+//import AVFoundation
 
 private func checkARSupport() -> Bool {
     return ARFaceTrackingConfiguration.isSupported
@@ -83,7 +83,9 @@ struct ExerciseView: View {
 private struct RestView: View {
     @Binding var timeRemaining: Int
     let onRestComplete: () -> Void
+    
     @State private var timer: Timer?
+    @State private var isMuted: Bool = false
     
     var body: some View {
         VStack {
@@ -91,18 +93,49 @@ private struct RestView: View {
                 .font(.headline)
                 .padding(30)
             
-            Text("\(timeRemaining)초")
-                .font(.system(size: 70, weight: .light))
-                .foregroundStyle(.yellow)
+            if timeRemaining > 10 {
+                Text("\(timeRemaining)초")
+                    .font(.system(size: 70, weight: .light))
+                    .foregroundStyle(.primary)
+            } else if timeRemaining > 5 {
+                Text("\(timeRemaining)초")
+                    .font(.system(size: 70, weight: .light))
+                    .foregroundStyle(.orange)
+            } else {
+                Text("\(timeRemaining)초")
+                    .font(.system(size: 70, weight: .light))
+                    .foregroundStyle(.red)
+            }
+            
+            Button(action: {
+                isMuted.toggle()
+            }) {
+                Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
+                    .frame(width: 20, height: 20)
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .padding(20)
+                    .background(.ultraThinMaterial)
+                    .background(isMuted ? .red : .clear)
+                    .clipShape(Circle())
+            }
+            .padding(.top, 80)
         }
-        .onAppear { startTimer() }
-        .onDisappear { stopTimer() }
+        .onAppear {
+            startTimer()
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            stopTimer()
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
     
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if timeRemaining > 0 {
+            if timeRemaining > 1 {
                 timeRemaining -= 1
+                palyTickSound(timeRemaining)
             } else {
                 stopTimer()
                 onRestComplete()
@@ -113,6 +146,15 @@ private struct RestView: View {
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
+    }
+    
+    private func palyTickSound(_ timeRemaining: Int) {
+        guard !isMuted else { return }
+        if timeRemaining <= 10 && timeRemaining > 5 {
+            AudioServicesPlaySystemSound(1057)
+        } else if timeRemaining <= 5 && timeRemaining >= 0 {
+            AudioServicesPlaySystemSound(1052)
+        }
     }
 }
 

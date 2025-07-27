@@ -13,7 +13,7 @@ struct ContentView: View {
     @State private var speechSynthesizer = AVSpeechSynthesizer()
     @State private var isMuted: Bool = false
     @State private var borderProgress: CGFloat = 0.0
-    @State private var restTime: Int = 30
+    @State private var restTime: Int = initialRestTime
     
     var body: some View {
         NavigationStack {
