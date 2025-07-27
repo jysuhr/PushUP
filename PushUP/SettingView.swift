@@ -8,6 +8,8 @@
 import SwiftUI
 import Combine
 
+public let initialRestTime: Int = 40
+
 struct SettingView: View {
     @Binding var restTime: Int
     
@@ -36,7 +38,7 @@ struct SettingView: View {
                     .font(.system(size: 20))
                     .padding(.trailing, 30)
                 
-                TextField("30", text: $restTimeString)
+                TextField("\(initialRestTime)", text: $restTimeString)
                     .font(.system(size: 20))
                     .multilineTextAlignment(.center)
                     .keyboardType(.numberPad)
@@ -52,7 +54,7 @@ struct SettingView: View {
                             Spacer()
                             Button("완료") {
                                 isTextFieldFocused = false
-                                restTime = Int(restTimeString) ?? 30
+                                restTime = Int(restTimeString) ?? initialRestTime
                             }
                         }
                     }
