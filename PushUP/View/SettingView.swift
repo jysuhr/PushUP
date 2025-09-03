@@ -72,5 +72,5 @@ struct SettingView: View {
 }
 
 #Preview {
-//    SettingView(restTime: 30)
+    SettingView(restTime: .constant(initialRestTime))
 }

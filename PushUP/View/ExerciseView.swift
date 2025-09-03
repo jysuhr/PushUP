@@ -7,14 +7,17 @@
 
 import SwiftUI
 import ARKit
-import SceneKit
-//import AVFoundation
-
-private func checkARSupport() -> Bool {
-    return ARFaceTrackingConfiguration.isSupported
-}
 
 struct ExerciseView: View {
+    /// ViewModel을 이 View의 상태관리자로 지정한다.
+    @StateObject private var viewModel: ExerciseViewModel
+    
+    init(restTime: Int, targetCount: [Int]) {
+        // View가 생성될 때 ViewModel을 초기화한다.
+        self._viewModel = StateObject(wrappedValue: ExerciseViewModel(restTime: restTime, targetCount: targetCount))
+    }
+    
+    /*
     var restTime: Int
     let targetCount: [Int]
     
@@ -29,6 +32,7 @@ struct ExerciseView: View {
         self.targetCount = targetCount
         self._restTimeRemaining = State(initialValue: restTime)
     }
+    */
     
     var body: some View {
         ZStack {
@@ -40,30 +44,41 @@ struct ExerciseView: View {
             .ignoresSafeArea(edges: .all)
             
             VStack {
-                Text(isResting ? "휴식 시간입니다!" : "푸시업을 시작하세요!")
+                Text(viewModel.navTitle)
                     .font(.title)
                     .fontWeight(.bold)
                     .padding(.top, 120)
                 
-                if isResting {
-                    // 휴식화면
-                    RestView(timeRemaining: $restTimeRemaining) {
-                        nextSet()
-                    }
-                } else {
-                    if currentSetIndex < targetCount.count {
-                        CountView(targetCount: targetCount[currentSetIndex], isFinished: isFinished) { isCompleted in
-                            if isCompleted {
-                                 startRest()
-                            }
-                        }
-                    }
+//                if isResting {
+//                    // 휴식화면
+//                    RestView(timeRemaining: $restTimeRemaining) {
+//                        nextSet()
+//                    }
+//                } else {
+//                    if currentSetIndex < targetCount.count {
+//                        CountView(targetCount: targetCount[currentSetIndex], isFinished: isFinished) { isCompleted in
+//                            if isCompleted {
+//                                 startRest()
+//                            }
+//                        }
+//                    }
+//                }
+                
+                /// viewModel의 상태에 따라 다른 View를 보여준다.
+                switch viewModel.viewState {
+                case .exercising, .finished:
+                    CountView(viewModel: viewModel)
+                case .resting:
+                    RestView(viewModel: viewModel)
                 }
+                
                 Spacer()
             }
         }
     }
     
+    /// 변수를 변경하는 함수는 viewModel로 이동
+    /*
     private func startRest() {
         if currentSetIndex < totalSetNum - 1 {
             isResting = true
@@ -78,14 +93,17 @@ struct ExerciseView: View {
         isResting = false
         currentSetIndex += 1
     }
+     */
 }
 
 private struct RestView: View {
-    @Binding var timeRemaining: Int
-    let onRestComplete: () -> Void
+    /// 상위 View로부터 viewModel을 전달받는다.
+    @ObservedObject var viewModel: ExerciseViewModel
     
-    @State private var timer: Timer?
-    @State private var isMuted: Bool = false
+//    @Binding var timeRemaining: Int
+//    let onRestComplete: () -> Void
+//    @State private var timer: Timer?
+//    @State private var isMuted: Bool = false
     
     var body: some View {
         VStack {
@@ -93,6 +111,7 @@ private struct RestView: View {
                 .font(.headline)
                 .padding(30)
             
+            /*
             if timeRemaining > 10 {
                 Text("\(timeRemaining)초")
                     .font(.system(size: 70, weight: .light))
@@ -106,31 +125,40 @@ private struct RestView: View {
                     .font(.system(size: 70, weight: .light))
                     .foregroundStyle(.red)
             }
+             */
+            
+            /// viewModel의 데이터를 사용하여 UI를 다시 그린다.
+            Text("\(viewModel.restTimeRemaining)초")
+                .font(.system(size: 70, weight: .light))
+                .foregroundStyle(timerColor) // 색상 로직 분리
             
             Button(action: {
-                isMuted.toggle()
+//                isMuted.toggle()
+                viewModel.toggleMute()
             }) {
-                Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
+                Image(systemName: viewModel.isMuted ? "speaker.slash.fill" : "speaker.2.fill")
                     .frame(width: 20, height: 20)
                     .font(.title2)
                     .foregroundColor(.white)
                     .padding(20)
                     .background(.ultraThinMaterial)
-                    .background(isMuted ? .red : .clear)
+                    .background(viewModel.isMuted ? .red : .clear)
                     .clipShape(Circle())
             }
             .padding(.top, 80)
-        }
-        .onAppear {
-            startTimer()
-            UIApplication.shared.isIdleTimerDisabled = true
-        }
-        .onDisappear {
-            stopTimer()
-            UIApplication.shared.isIdleTimerDisabled = false
+            
         }
     }
     
+    /// UI 로직은 View에 남겨놓는다.
+    private var timerColor: Color {
+        if viewModel.restTimeRemaining > 10 { .primary }
+        else if viewModel.restTimeRemaining > 5 { .orange }
+        else { .red }
+    }
+    
+    /// 함수는 viewModel로 이동
+    /*
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             if timeRemaining > 1 {
@@ -156,10 +184,14 @@ private struct RestView: View {
             AudioServicesPlaySystemSound(1052)
         }
     }
+     */
 }
 
 private struct CountView: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: ExerciseViewModel
+    
+    /*
     @State private var currentCount: Int = 0
     @State private var showARCamera = false
     var targetCount: Int
@@ -170,26 +202,31 @@ private struct CountView: View {
         guard targetCount > 0 else { return 0.0 }
         return Double(currentCount) / Double(targetCount)
     }
+     */
     
     var body: some View {
         VStack {
             if ARFaceTrackingConfiguration.isSupported {
-                if showARCamera {
-                    ARFaceTrackingView(currentCount: $currentCount, targetCount: targetCount)
+                if viewModel.showARCamera {
+                    ARFaceTrackingView(currentCount: $viewModel.currentCount, targetCount: viewModel.currentTargetCount)
                         .frame(height: 200)
                         .cornerRadius(15)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
                                 .stroke(Color.white.opacity(0.3), lineWidth: 2)
                         )
-                        .onAppear {
-                            // 카메라 권한 요청
-                            requestCameraPermission()
+//                        .onAppear {
+//                            // 카메라 권한 요청
+//                            requestCameraPermission()
+//                        }
+                        .onChange(of: viewModel.currentCount) { _ in
+                            viewModel.onCountChanged()
                         }
                 } else {
                     // AR 시작 버튼
                     Button("카메라 시작") {
-                        showARCamera = true
+//                        showARCamera = true
+                        viewModel.startARSession()
                     }
                     .padding()
                     .background(.blue)
@@ -202,36 +239,20 @@ private struct CountView: View {
                     .padding()
             }
             
-            ZStack {
-                Text("\(currentCount) / \(targetCount)")
-                    .font(.system(size: 60, weight: .bold))
-                    .padding(.top, 20)
-                    .padding(.bottom, 140)
-                
-                if currentCount >= targetCount {
-                    Text(isFinished ? "모든 세션 완료! 🎊" : "이번 세션 완료! 🎉")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.green)
-                        .padding()
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now()) {
-                                onSetComplete(true)
-                            }
-                        }
-                }
-            }
+            Text("\(viewModel.currentCount) / \(viewModel.currentTargetCount)")
+                .font(.system(size: 60, weight: .bold))
+                .padding(.top, 20)
+                .padding(.bottom, 140)
             
             ZStack {
-                ProgressView(value: progressValue)
+                ProgressView(value: viewModel.progressValue)
                     .progressViewStyle(LinearProgressViewStyle(tint: Color(red: 0.8, green: 0.1, blue: 0.1)))
                     .scaleEffect(x: 1, y: 16)
-                    .animation(.easeInOut(duration: 0.5), value: progressValue)
+                    .animation(.easeInOut(duration: 0.5), value: viewModel.progressValue)
                     .padding(.horizontal, 30)
-                if isFinished {
-                    Button(action: {
-                        dismiss()
-                    }) {
+                
+                if viewModel.viewState == .finished {
+                    Button(action: { dismiss() }) {
                         ZStack {
                             Rectangle()
                                 .fill(.green)
@@ -247,18 +268,8 @@ private struct CountView: View {
             }
         }
     }
-    
-    private func requestCameraPermission() {
-        AVCaptureDevice.requestAccess(for: .video) { granted in
-            if !granted {
-                DispatchQueue.main.async {
-                    showARCamera = false
-                }
-            }
-        }
-    }
 }
 
 #Preview {
-//    ExerciseView(targetCount: [10])
+    ExerciseView(restTime: 3, targetCount: [10])
 }
