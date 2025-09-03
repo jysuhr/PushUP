@@ -6,14 +6,16 @@
 //
 
 import SwiftUI
-import AVFoundation
 
 struct ContentView: View {
-    @State private var count = 0
-    @State private var speechSynthesizer = AVSpeechSynthesizer()
-    @State private var isMuted: Bool = false
-    @State private var borderProgress: CGFloat = 0.0
-    @State private var restTime: Int = initialRestTime
+    /// @State로 선언되어있던 변수를 삭제하고 ContentViewModel로부터 데이터를 받아온다.
+//    @State private var count = 0
+//    @State private var speechSynthesizer = AVSpeechSynthesizer()
+//    @State private var isMuted: Bool = false
+//    @State private var restTime: Int = initialRestTime
+    
+    /// @StateObject로 viewModel을 소유한다.
+    @StateObject private var viewModel = ContentViewModel()
     
     var body: some View {
         NavigationStack {
@@ -30,21 +32,13 @@ struct ContentView: View {
                 
                 TabView {
                     VStack(spacing: 0) {
-                        CountView(count: $count,
-                                  isMuted: $isMuted,
-                                  speechSynthesizer: speechSynthesizer)
-                        
-                        ButtonView(count: $count,
-                                   isMuted: $isMuted,
-                                   restTime: $restTime,
-                                   speechSynthesizer: speechSynthesizer)
-                        
+                        CountView(viewModel: viewModel)
+                        ButtonView(viewModel: viewModel)
                         Spacer()
                     }
-                    
-                    PresetView(restTime: $restTime)
-                    
-                    SettingView(restTime: $restTime)
+                    /// 다른 탭도 viewModel을 통해 데이터를 표시하고 액션을 전달한다.
+                    PresetView(contentViewModel: viewModel)
+                    SettingView(restTime: $viewModel.restTime)
                 }
                 .tabViewStyle(PageTabViewStyle())
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
@@ -54,6 +48,7 @@ struct ContentView: View {
 }
 
 private struct TitleView: View {
+    /// TitleView는 상태 데이터를 가지고 있지 않기 때문에 수정이 필요없다.
     var body: some View {
         VStack {
             HStack {
@@ -70,9 +65,13 @@ private struct TitleView: View {
 }
 
 private struct CountView: View {
-    @Binding var count: Int
-    @Binding var isMuted: Bool
-    let speechSynthesizer: AVSpeechSynthesizer
+    /// @StateObject 대신 @ObservedObject를 사용한다.
+    /// 이 View는 viewModel을 소유하지 않고, 상위 View로부터 전달받기 때문이다.
+    @ObservedObject var viewModel: ContentViewModel
+    
+//    @Binding var count: Int
+//    @Binding var isMuted: Bool
+//    let speechSynthesizer: AVSpeechSynthesizer
     
     var body: some View {
         VStack {
@@ -82,7 +81,8 @@ private struct CountView: View {
                 .padding(.top, 150)
                 .padding(.bottom, 50)
             HStack {
-                Text("\(count)")
+                /// viewModel로부터 전달받은 데이터 사용
+                Text("\(viewModel.count)")
                     .font(.system(size: 45, weight: .bold))
                 Text("개")
                     .font(.system(size: 32, weight: .medium))
@@ -91,12 +91,18 @@ private struct CountView: View {
             
             HStack(spacing: 0) {
                 Button(action: {
+                    /// 로직을 직접 실행하던 부분을 삭제한다.
+                    /// viewModel의 메소드를 호출한다.
+                    viewModel.decrementCount()
+                    
+                    /*
                     if (count > 0) {
                         count -= 1
                     }
                     if (!isMuted) {
                         speakCount()
                     }
+                     */
                 }) {
                     Text("감소")
                         .foregroundColor(.white)
@@ -109,10 +115,15 @@ private struct CountView: View {
                 .padding(.horizontal, 5)
                 
                 Button(action: {
+                    /// viewModel의 메소드를 호출한다.
+                    viewModel.incrementCount()
+                    
+                    /*
                     count += 1
                     if (!isMuted) {
                         speakCount()
                     }
+                    */
                 }) {
                     Text("증가")
                         .foregroundColor(.white)
@@ -129,6 +140,9 @@ private struct CountView: View {
         }
     }
     
+    /// speakCount() 함수는 ViewModel로 이동시킨다.
+    /// MVVM에서 View의 역할중 데이터 가공은 없기 때문.
+    /*
     private func speakCount() {
         // 현재 재생 중인 음성을 중단
         speechSynthesizer.stopSpeaking(at: .immediate)
@@ -140,47 +154,58 @@ private struct CountView: View {
         
         speechSynthesizer.speak(utterance)
     }
+     */
 }
 
 private struct ButtonView: View {
-    @Binding var count: Int
-    @Binding var isMuted: Bool
-    @Binding var restTime: Int
-    let speechSynthesizer: AVSpeechSynthesizer
+    /// @State로 선언된 변수를 받아오던 @Binding은 삭제한다.
+    @ObservedObject var viewModel: ContentViewModel
+    
+//    @Binding var count: Int
+//    @Binding var isMuted: Bool
+//    @Binding var restTime: Int
+//    let speechSynthesizer: AVSpeechSynthesizer
     
     var body: some View {
-        NavigationLink(destination: ExerciseView(restTime: restTime, targetCount: [count])) {
-            Text("운동 시작!")
-                .foregroundColor(.white)
-                .font(.system(size: 18, weight: .bold))
-                .frame(width: 155, height: 50)
-                .padding(.horizontal, 40)
-                .padding(.vertical, 15)
-                .background(.ultraThinMaterial)
-                .background(.blue)
-                .cornerRadius(10)
-        }
-        .disabled(count <= 0)
-        .padding(.top, 10)
-        
-        Button(action: {
-            isMuted.toggle()
-            
-            if isMuted {
-               speechSynthesizer.stopSpeaking(at: .immediate)
+        VStack(spacing: 0) {
+            NavigationLink(destination: ExerciseView(restTime: viewModel.restTime, targetCount: [viewModel.count])) {
+                Text("운동 시작!")
+                    .foregroundColor(.white)
+                    .font(.system(size: 18, weight: .bold))
+                    .frame(width: 155, height: 50)
+                    .padding(.horizontal, 40)
+                    .padding(.vertical, 15)
+                    .background(.ultraThinMaterial)
+                    .background(.blue)
+                    .cornerRadius(10)
             }
-        }) {
-            Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
-                .frame(width: 20, height: 20)
-                .font(.title2)
-                .foregroundColor(.white)
-                .padding(20)
-                .background(.ultraThinMaterial)
-                .background(isMuted ? .red : .clear)
-                .clipShape(Circle())
+            .disabled(viewModel.count <= 0)
+            .padding(.top, 10)
+            
+            Button(action: {
+                /// viewModel의 함수를 호출한다.
+                viewModel.toggleMute()
+                
+                /*
+                 isMuted.toggle()
+                 
+                 if isMuted {
+                 speechSynthesizer.stopSpeaking(at: .immediate)
+                 }
+                 */
+            }) {
+                Image(systemName: viewModel.isMuted ? "speaker.slash.fill" : "speaker.2.fill")
+                    .frame(width: 20, height: 20)
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .padding(20)
+                    .background(.ultraThinMaterial)
+                    .background(viewModel.isMuted ? .red : .clear)
+                    .clipShape(Circle())
+            }
+            .padding(.top, 80)
+            .padding(.bottom, 100)
         }
-        .padding(.top, 80)
-        .padding(.bottom, 100)
     }
 }
 
